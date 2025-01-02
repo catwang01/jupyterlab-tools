@@ -1,0 +1,8 @@
+{
+  "jupyter.lab.shortcuts": [],
+  "title": "jupyterlab-tools",
+  "description": "jupyterlab-tools settings.",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
