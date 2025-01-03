@@ -7,28 +7,9 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ICommandPalette } from '@jupyterlab/apputils';
 import { INotebookTracker, NotebookActions } from '@jupyterlab/notebook';
 import { MarkdownCell, ICellModel } from '@jupyterlab/cells';
+import { splitMarkdownByHeaders } from './utils';
 
 import { requestAPI } from './handler';
-
-function splitMarkdownByHeaders(text: string): string[] {
-  const lines = text.split('\n');
-  const cells: string[] = [];
-  let currentCell: string[] = [];
-
-  lines.forEach(line => {
-    if (line.match(/^#{1,6}\s/) && currentCell.length > 0) {
-      cells.push(currentCell.join('\n'));
-      currentCell = [];
-    }
-    currentCell.push(line);
-  });
-
-  if (currentCell.length > 0) {
-    cells.push(currentCell.join('\n'));
-  }
-
-  return cells;
-}
 
 /**
  * Initialization data for the jupyterlab-tools extension.
@@ -86,6 +67,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const model = activeCell.model as ICellModel;
         const text = model.sharedModel.source;
         const cells = splitMarkdownByHeaders(text);
+        
+        // 如果返回空数组（说明是以 header 开头），直接返回不做任何操作
+        if (cells.length === 0) {
+          return;
+        }
         
         // 使用 NotebookActions 来操作 cells
         const currentIndex = notebook.activeCellIndex;

@@ -1,28 +1,29 @@
-const jestJupyterLab = require('@jupyterlab/testutils/lib/jest-config');
-
 const esModules = [
+  '@jupyterlab',
   '@codemirror',
-  '@jupyter/ydoc',
-  '@jupyterlab/',
+  '@lumino',
   'lib0',
-  'nanoid',
-  'vscode-ws-jsonrpc',
   'y-protocols',
   'y-websocket',
   'yjs'
 ].join('|');
 
-const baseConfig = jestJupyterLab(__dirname);
-
 module.exports = {
-  ...baseConfig,
-  automock: false,
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/.ipynb_checkpoints/*'
-  ],
-  coverageReporters: ['lcov', 'text'],
-  testRegex: 'src/.*/.*.spec.ts[x]?$',
-  transformIgnorePatterns: [`/node_modules/(?!${esModules}).+`]
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.test.json',
+      useESM: true
+    }]
+  },
+  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  testEnvironment: 'jsdom',
+  transformIgnorePatterns: [`/node_modules/(?!(${esModules})).+`],
+  moduleNameMapper: {
+    '\\.(css|less|sass|scss)$': '<rootDir>/test/styleMock.js',
+    '\\.(gif|ttf|eot|svg)$': '<rootDir>/test/fileMock.js',
+    '^@jupyterlab/(.*)$': '<rootDir>/node_modules/@jupyterlab/$1/lib'
+  },
+  moduleDirectories: ['node_modules'],
+  preset: 'ts-jest/presets/js-with-babel'
 };
