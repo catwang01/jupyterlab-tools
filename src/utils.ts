@@ -43,4 +43,28 @@ export function splitMarkdownByHeaders(text: string): string[] {
   }
   
   return segments;
+}
+
+export interface HeaderInfo {
+  level: number;
+  text: string;
+  lineNumber: number;
+}
+
+export function getHeaders(text: string): HeaderInfo[] {
+  const lines = text.split('\n');
+  const headers: HeaderInfo[] = [];
+  
+  lines.forEach((line, index) => {
+    const match = line.match(/^(#{1,8})\s+(.+)$/);
+    if (match) {
+      headers.push({
+        level: match[1].length,
+        text: match[2],
+        lineNumber: index
+      });
+    }
+  });
+  
+  return headers;
 } 

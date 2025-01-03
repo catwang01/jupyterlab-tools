@@ -3,3 +3,135 @@
 
     https://jupyterlab.readthedocs.io/en/stable/developer/css.html
 */
+
+.jp-TOC-Widget {
+  min-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.jp-TOC-Widget ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.jp-TOC-Widget li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jp-TOC-Panel {
+  min-width: 200px;
+  max-width: 300px;
+  overflow-y: auto;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+}
+
+.jp-TOC-Container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--jp-layout-color1);
+}
+
+.jp-TOC-Header {
+  padding: 8px 12px;
+  font-weight: 600;
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color0);
+  min-height: 32px;
+  font-size: var(--jp-ui-font-size1);
+}
+
+.jp-TOC-List {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.jp-TOC-List ul {
+  list-style: none;
+  padding-left: 16px;
+  margin: 0;
+}
+
+.jp-TOC-Item {
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 0;
+  outline: none;
+  display: block;
+  color: var(--jp-content-font-color1);
+  font-size: var(--jp-ui-font-size1);
+  line-height: 1.5;
+  transition: background-color 0.1s ease;
+  user-select: none;
+  padding: 4px 12px;
+}
+
+.jp-TOC-Item:hover {
+  /* 移除背景色 */
+}
+
+.jp-TOC-Item:focus {
+  outline: none;
+  /* 移除背景色 */
+}
+
+.jp-TOC-Item.jp-mod-active {
+  background-color: var(--jp-brand-color1);
+  color: white;
+}
+
+.jp-TOC-Item-Text {
+  padding-left: 4px;
+}
+
+.jp-TOC-Empty {
+  padding: 12px;
+  color: var(--jp-content-font-color2);
+  text-align: center;
+  font-style: italic;
+  font-size: var(--jp-ui-font-size1);
+}
+
+.jp-TOC-Item.jp-mod-focused {
+  /* 移除背景色和阴影 */
+}
+
+.jp-TOC-Item.jp-mod-active.jp-mod-focused {
+  /* 移除阴影 */
+}
+
+.jp-TOC-List ul .jp-TOC-Item::before {
+  display: none;
+}
+
+.jp-TOC-Item.jp-mod-selected {
+  background-color: var(--jp-brand-color1);
+  color: white;
+}
+
+.jp-TOC-Item.jp-mod-selected:hover {
+  background-color: var(--jp-brand-color0);
+}
+
+/* 当有多个选择时，活动项目的样式 */
+.jp-TOC-Item.jp-mod-selected.jp-mod-active {
+  background-color: var(--jp-brand-color0);
+  box-shadow: inset 0 0 0 1px white;
+}
+
+.jp-TOC-Item-Level {
+  margin-left: 8px;
+  color: var(--jp-ui-font-color2);
+  font-size: var(--jp-ui-font-size0);
+  opacity: 0.7;
+}

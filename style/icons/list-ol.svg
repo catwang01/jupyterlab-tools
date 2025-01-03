@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+  <g class="jp-icon3" fill="#616161">
+    <!-- 第一级 -->
+    <path d="M3 4h2v2H3V4m4 0h14v2H7V4"/>
+    <!-- 第二级（缩进） -->
+    <path d="M5 11h2v2H5v-2m4 0h12v2H9v-2"/>
+    <!-- 第三级（更多缩进） -->
+    <path d="M7 18h2v2H7v-2m4 0h10v2H11v-2"/>
+    <!-- 连接线 -->
+    <path d="M4 8V6l1-1v3M6 15v-2l1-1v3M8 22v-2l1-1v3" opacity="0.6"/>
+  </g>
+</svg> 

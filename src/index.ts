@@ -1,6 +1,7 @@
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin,
+  ILayoutRestorer,
 } from '@jupyterlab/application';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -8,8 +9,26 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 import { INotebookTracker, NotebookActions } from '@jupyterlab/notebook';
 import { MarkdownCell, ICellModel } from '@jupyterlab/cells';
 import { splitMarkdownByHeaders } from './utils';
+import { WidgetTracker } from '@jupyterlab/apputils';
+import { TOCPanel } from './toc_panel';
+import { LabIcon } from '@jupyterlab/ui-components';
+import listOlSvgstr from '../style/icons/list-ol.svg';
 
 import { requestAPI } from './handler';
+
+function indentHeader(text: string): string {
+  return text.replace(/^(#{1,5})\s/, '#$1 ');
+}
+
+function dedentHeader(text: string): string {
+  return text.replace(/^(#{2,6})\s/, (match) => match.slice(1));
+}
+
+// 创建 TOC 图标
+const tocIcon = new LabIcon({
+  name: 'jupyterlab-tools:toc',
+  svgstr: listOlSvgstr
+});
 
 /**
  * Initialization data for the jupyterlab-tools extension.
@@ -19,12 +38,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
   description: 'A JupyterLab extension.',
   autoStart: true,
   requires: [INotebookTracker],
-  optional: [ISettingRegistry, ICommandPalette],
+  optional: [ISettingRegistry, ICommandPalette, ILayoutRestorer],
   activate: (
     app: JupyterFrontEnd,
     tracker: INotebookTracker,
     settingRegistry: ISettingRegistry | null,
-    palette: ICommandPalette | null
+    palette: ICommandPalette | null,
+    restorer: ILayoutRestorer | null
   ) => {
     console.log('JupyterLab extension jupyterlab-tools is activated!');
 
@@ -104,6 +124,123 @@ const plugin: JupyterFrontEndPlugin<void> = {
         category: 'Notebook Operations'
       });
     }
+
+    // 添加缩进命令
+    app.commands.addCommand('jupyterlab-tools:indent-markdown-header', {
+      label: 'Indent Markdown Header',
+      execute: async () => {
+        const notebookWidget = tracker.currentWidget;
+        if (!notebookWidget) return;
+
+        const notebook = notebookWidget.content;
+        const activeCell = notebook.activeCell;
+
+        if (!activeCell || !(activeCell instanceof MarkdownCell)) return;
+
+        const model = activeCell.model as ICellModel;
+        const text = model.sharedModel.source;
+        const lines = text.split('\n');
+        const cursorPosition = activeCell.editor?.getCursorPosition();
+        
+        if (!cursorPosition) return;
+
+        // 获取光标所在行
+        const line = lines[cursorPosition.line];
+        if (!line?.match(/^#{1,5}\s/)) return;
+
+        // 更新该行
+        lines[cursorPosition.line] = indentHeader(line);
+        model.sharedModel.setSource(lines.join('\n'));
+      }
+    });
+
+    // 添加反缩进命令
+    app.commands.addCommand('jupyterlab-tools:dedent-markdown-header', {
+      label: 'Dedent Markdown Header',
+      execute: async () => {
+        const notebookWidget = tracker.currentWidget;
+        if (!notebookWidget) return;
+
+        const notebook = notebookWidget.content;
+        const activeCell = notebook.activeCell;
+
+        if (!activeCell || !(activeCell instanceof MarkdownCell)) return;
+
+        const model = activeCell.model as ICellModel;
+        const text = model.sharedModel.source;
+        const lines = text.split('\n');
+        const cursorPosition = activeCell.editor?.getCursorPosition();
+        
+        if (!cursorPosition) return;
+
+        // 获取光标所在行
+        const line = lines[cursorPosition.line];
+        if (!line?.match(/^#{2,6}\s/)) return;
+
+        // 更新该行
+        lines[cursorPosition.line] = dedentHeader(line);
+        model.sharedModel.setSource(lines.join('\n'));
+      }
+    });
+
+    // 添加键盘快捷键
+    app.commands.addKeyBinding({
+      command: 'jupyterlab-tools:indent-markdown-header',
+      keys: ['Tab'],
+      selector: '.jp-MarkdownCell-editor'
+    });
+
+    app.commands.addKeyBinding({
+      command: 'jupyterlab-tools:dedent-markdown-header',
+      keys: ['Shift Tab'],
+      selector: '.jp-MarkdownCell-editor'
+    });
+
+    // 创建 TOC 面板
+    const tocPanel = new TOCPanel(tracker);
+    tocPanel.title.icon = tocIcon;  // 设置图标
+    const tocTracker = new WidgetTracker<TOCPanel>({
+      namespace: 'jupyterlab-toc'
+    });
+
+    // 添加到主区域
+    tocPanel.id = 'jupyterlab-toc';
+    app.shell.add(tocPanel, 'left', { rank: 200 });
+
+    // 如果提供了 restorer，注册面板以便恢复布局
+    if (restorer) {
+      void restorer.restore(tocTracker, {
+        command: 'jupyterlab-tools:show-toc-panel',
+        name: () => 'jupyterlab-toc'
+      });
+    }
+
+    void tocTracker.add(tocPanel);
+
+    // 添加命令以显示/隐藏面板
+    app.commands.addCommand('jupyterlab-tools:show-toc-panel', {
+      label: 'Show TOC Panel',
+      execute: () => {
+        if (!tocPanel.isAttached) {
+          app.shell.add(tocPanel, 'left', { rank: 200 });
+        }
+        app.shell.activateById(tocPanel.id);
+      }
+    });
+
+    // 添加到命令面板
+    if (palette) {
+      palette.addItem({
+        command: 'jupyterlab-tools:show-toc-panel',
+        category: 'Notebook Operations'
+      });
+    }
+
+    app.commands.addKeyBinding({
+      command: 'jupyterlab-tools:show-toc',
+      keys: ['Accel T'],
+      selector: '.jp-Notebook'
+    });
   }
 };
 
