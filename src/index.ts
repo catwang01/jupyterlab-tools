@@ -68,31 +68,33 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const text = model.sharedModel.source;
         const cells = splitMarkdownByHeaders(text);
         
-        // 如果返回空数组（说明是以 header 开头），直接返回不做任何操作
+        // 如果返回空数组，直接返回不做任何操作
         if (cells.length === 0) {
           return;
         }
         
-        // 使用 NotebookActions 来操作 cells
+        // 记住当前的位置
         const currentIndex = notebook.activeCellIndex;
         
-        // 删除当前 cell
-        NotebookActions.deleteCells(notebook);
-        
-        // 插入新的 cells
-        cells.forEach(cellText => {
-          NotebookActions.insertBelow(notebook);
-          NotebookActions.changeCellType(notebook, 'markdown');
-          const newCell = notebook.activeCell;
-          if (newCell instanceof MarkdownCell) {
-            const newModel = newCell.model as ICellModel;
-            newModel.sharedModel.setSource(cellText);
+        // 先插入新的 cells
+        cells.forEach((cellText, index) => {
+          if (index === 0) {
+            // 第一个 cell 直接替换当前 cell
+            model.sharedModel.setSource(cellText);
+          } else {
+            // 其他 cell 插入到下方
+            NotebookActions.insertBelow(notebook);
+            NotebookActions.changeCellType(notebook, 'markdown');
+            const newCell = notebook.activeCell;
+            if (newCell instanceof MarkdownCell) {
+              const newModel = newCell.model as ICellModel;
+              newModel.sharedModel.setSource(cellText);
+            }
           }
         });
-        
-        // 删除多余的空 cell
+
+        // 选中第一个 cell
         notebook.activeCellIndex = currentIndex;
-        NotebookActions.deleteCells(notebook);
       }
     });
 

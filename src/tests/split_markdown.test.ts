@@ -1,11 +1,6 @@
 import { splitMarkdownByHeaders } from '../utils';
 
 describe('splitMarkdownByHeaders', () => {
-  it('should not split cell that starts with header', () => {
-    const text = '# Header\nSome content\n## Subheader\nMore content';
-    expect(splitMarkdownByHeaders(text)).toEqual([]);
-  });
-
   it('should split cell with content before headers', () => {
     const text = 'Initial content\n# Header\nSome content\n## Subheader\nMore content';
     expect(splitMarkdownByHeaders(text)).toEqual([
@@ -24,14 +19,27 @@ describe('splitMarkdownByHeaders', () => {
     ]);
   });
 
-  it('should handle cell with no headers', () => {
+  it('should not split cell with no headers', () => {
     const text = 'Just some content\nwithout any headers';
-    expect(splitMarkdownByHeaders(text)).toEqual([
-      'Just some content\nwithout any headers'
-    ]);
+    expect(splitMarkdownByHeaders(text)).toEqual([]);
+  });
+
+  it('should split cell with more than one potential split points', () => {
+    const text = 'Initial content\n# Header\n# Some content';
+    expect(splitMarkdownByHeaders(text)).toEqual(["Initial content", "# Header", "# Some content"]);
+  });
+
+  it('should split cell with only start with one potential split point', () => {
+    const text = '# Header\nInitial content\n\nSome content';
+    expect(splitMarkdownByHeaders(text)).toEqual([]);
+  });
+
+  it('should split cell with only one potential split point', () => {
+    const text = 'Initial content\n# Header\nSome content';
+    expect(splitMarkdownByHeaders(text)).toEqual(["Initial content", "# Header\nSome content"]);
   });
 
   it('should handle empty cell', () => {
-    expect(splitMarkdownByHeaders('')).toEqual(['']);
+    expect(splitMarkdownByHeaders('')).toEqual([]);
   });
 }); 
