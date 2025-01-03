@@ -1,5 +1,11 @@
 {
-  "jupyter.lab.shortcuts": [],
+  "jupyter.lab.shortcuts": [
+    {
+      "command": "jupyterlab-tools:split-markdown-by-headers",
+      "keys": ["Accel Shift H"],
+      "selector": ".jp-Notebook:focus"
+    }
+  ],
   "title": "jupyterlab-tools",
   "description": "jupyterlab-tools settings.",
   "type": "object",
