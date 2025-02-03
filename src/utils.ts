@@ -5,14 +5,37 @@ export function splitMarkdownByHeaders(text: string): string[] {
   const segments: string[] = [];
   let currentSegment: string[] = [];
   let isFirstSegment = true;
+  let inCodeBlock = false;  // 跟踪是否在代码块内
+  let foundFirstHeader = false;  // 跟踪是否找到第一个标题
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.match(/^#{1,6}\s/)) {  // 使用正则来匹配标题格式
-      // 如果已经有内容，保存当前片段
+    
+    // 检查是否进入或离开代码块
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
       if (currentSegment.length > 0) {
-        segments.push(currentSegment.join('\n'));
-        currentSegment = [];
+        currentSegment.push(line);
+      } else if (isFirstSegment) {
+        currentSegment = [line];
+      }
+      continue;
+    }
+    
+    // 只有在不在代码块内时才检查标题
+    if (!inCodeBlock && line.match(/^#{1,6}\s/)) {
+      if (!foundFirstHeader) {
+        foundFirstHeader = true;
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment.join('\n'));
+          currentSegment = [];
+        }
+      } else {
+        // 如果已经找到过标题，这是第二个或之后的标题
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment.join('\n'));
+          currentSegment = [];
+        }
       }
       isFirstSegment = false;
       // 开始新片段
@@ -37,12 +60,8 @@ export function splitMarkdownByHeaders(text: string): string[] {
     segments.push(currentSegment.join('\n'));
   }
   
-  // 如果无法分割成多个片段，返回空数组
-  if (segments.length <= 1) {
-    return [];
-  }
-  
-  return segments;
+  // 如果找到了标题，返回所有片段；否则返回空数组
+  return foundFirstHeader ? segments : [];
 }
 
 export interface HeaderInfo {
