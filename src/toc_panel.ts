@@ -9,6 +9,13 @@ interface TOCItem extends HeaderInfo {
 }
 
 export class TOCPanel extends Widget {
+  readonly headerClicked = new Signal<this, { cellIndex: number; header: HeaderInfo }>(this);
+  private _tracker: INotebookTracker;
+  private _selectedItems: Set<string>;
+  private _lastSelectedItem: string | null = null;
+  private _headersWithChildren: Set<string> = new Set();
+  private _collapsedHeaders: Set<string> = new Set();
+
   constructor(tracker: INotebookTracker) {
     super();
     this.addClass('jp-TOC-Panel');
@@ -188,6 +195,20 @@ export class TOCPanel extends Widget {
       }
     });
 
+    // 预计算每个标题是否有子标题
+    const headersWithChildren = new Set<string>();
+    for (let i = 0; i < allHeaders.length - 1; i++) {
+      const current = allHeaders[i];
+      const next = allHeaders[i + 1];
+      if (next.level > current.level) {
+        const key = `${current.cellIndex}-${current.lineNumber}`;
+        headersWithChildren.add(key);
+      }
+    }
+
+    // 存储到实例变量中供其他方法使用
+    this._headersWithChildren = headersWithChildren;
+
     if (allHeaders.length === 0) {
       const noHeaders = document.createElement('div');
       noHeaders.textContent = 'No headers found in notebook';
@@ -217,6 +238,14 @@ export class TOCPanel extends Widget {
     });
 
     this.node.appendChild(rootContainer);
+
+    // 清理不存在的标题的折叠状态
+    const currentHeaders = new Set(allHeaders.map(h => this._getItemKey(h)));
+    for (const collapsedKey of this._collapsedHeaders) {
+      if (!currentHeaders.has(collapsedKey)) {
+        this._collapsedHeaders.delete(collapsedKey);
+      }
+    }
   }
 
   private _createTOCItem(header: TOCItem): HTMLLIElement {
@@ -230,27 +259,70 @@ export class TOCPanel extends Widget {
     li.dataset.level = header.level.toString();
     
     // 设置缩进
-    li.style.paddingLeft = `${(header.level - 1) * 10 + 12}px`;  // 基础padding 12px + 每级增加10px
+    li.style.paddingLeft = `${(header.level - 1) * 10 + 12}px`;
     
-    // 创建标题文本容器
+    // 检查是否有子标题
+    const hasChildren = this._hasChildHeaders(header);
+    
+    // 添加折叠按钮（仅当有子标题时）
+    const collapseBtn = document.createElement('span');
+    collapseBtn.className = 'jp-TOC-Collapse';
+    if (hasChildren) {
+      collapseBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      `;
+
+      // 检查是否之前已折叠
+      const headerKey = this._getItemKey(header);
+      if (this._collapsedHeaders.has(headerKey)) {
+        collapseBtn.classList.add('jp-mod-collapsed');
+        // 初始化时隐藏子项
+        requestAnimationFrame(() => {
+          this._toggleChildItems(li, true);
+        });
+      }
+
+      collapseBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isCollapsed = collapseBtn.classList.toggle('jp-mod-collapsed');
+        
+        // 更新折叠状态
+        const headerKey = this._getItemKey(header);
+        if (isCollapsed) {
+          this._collapsedHeaders.add(headerKey);
+        } else {
+          this._collapsedHeaders.delete(headerKey);
+        }
+        
+        this._toggleChildItems(li, isCollapsed);
+      });
+    } else {
+      collapseBtn.classList.add('jp-TOC-Collapse-placeholder');
+    }
+    
+    // 创建内容容器
     const contentDiv = document.createElement('div');
-    contentDiv.style.display = 'flex';
-    contentDiv.style.alignItems = 'center';
+    contentDiv.className = 'jp-TOC-Item-Content';
     
     // 创建标题文本
     const titleSpan = document.createElement('span');
     titleSpan.textContent = header.text;
     titleSpan.className = 'jp-TOC-Item-Text';
-    contentDiv.appendChild(titleSpan);
-
+    
     // 添加 level 标签
     const levelSpan = document.createElement('span');
     levelSpan.textContent = `H${header.level}`;
     levelSpan.className = 'jp-TOC-Item-Level';
+    
+    // 组装内容
+    contentDiv.appendChild(titleSpan);
     contentDiv.appendChild(levelSpan);
-
+    
+    li.appendChild(collapseBtn);
     li.appendChild(contentDiv);
-
+    
     // 检查是否应该高亮
     this._updateItemHighlight(li, header);
     
@@ -400,8 +472,24 @@ export class TOCPanel extends Widget {
     });
   }
 
-  readonly headerClicked = new Signal<this, { cellIndex: number; header: HeaderInfo }>(this);
-  private _tracker: INotebookTracker;
-  private _selectedItems: Set<string>;
-  private _lastSelectedItem: string | null = null;
+  // 修改 _hasChildHeaders 方法以使用预计算的结果
+  private _hasChildHeaders(header: TOCItem): boolean {
+    const key = `${header.cellIndex}-${header.lineNumber}`;
+    return this._headersWithChildren.has(key);
+  }
+
+  // 抽取折叠/展开子项的逻辑到单独的方法
+  private _toggleChildItems(li: HTMLElement, isCollapsed: boolean): void {
+    const currentLevel = parseInt(li.dataset.level || '0');
+    let nextItem = li.nextElementSibling as HTMLElement;
+    
+    while (nextItem) {
+      const nextLevel = parseInt(nextItem.dataset.level || '0');
+      if (nextLevel <= currentLevel) {
+        break;
+      }
+      nextItem.style.display = isCollapsed ? 'none' : '';
+      nextItem = nextItem.nextElementSibling as HTMLElement;
+    }
+  }
 } 

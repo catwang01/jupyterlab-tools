@@ -70,7 +70,8 @@
   white-space: nowrap;
   border-radius: 0;
   outline: none;
-  display: block;
+  display: flex;
+  align-items: center;
   color: var(--jp-content-font-color1);
   font-size: var(--jp-ui-font-size1);
   line-height: 1.5;
@@ -94,7 +95,7 @@
 }
 
 .jp-TOC-Item-Text {
-  padding-left: 4px;
+  padding-left: 0;
 }
 
 .jp-TOC-Empty {
@@ -137,4 +138,73 @@
   color: var(--jp-ui-font-color2);
   font-size: var(--jp-ui-font-size0);
   opacity: 0.7;
+}
+
+/* 修改折叠图标的样式 */
+.jp-TOC-Collapse {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 0;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  color: var(--jp-ui-font-color2);
+  opacity: 0.7;
+  background: transparent;
+}
+
+.jp-TOC-Collapse svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  transition: transform 0.2s ease;
+}
+
+/* 父元素或图标本身悬停时增加透明度 */
+.jp-TOC-Item:hover .jp-TOC-Collapse,
+.jp-TOC-Collapse:hover {
+  opacity: 1;
+  color: var(--jp-ui-font-color1);
+}
+
+.jp-TOC-Collapse:hover {
+  background: var(--jp-layout-color2);
+}
+
+/* 当折叠时旋转 SVG */
+.jp-TOC-Collapse.jp-mod-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+/* 选中状态的样式 */
+.jp-TOC-Item.jp-mod-selected .jp-TOC-Collapse,
+.jp-TOC-Item.jp-mod-active .jp-TOC-Collapse {
+  color: white;
+}
+
+/* 隐藏没有子项的图标占位符 */
+.jp-TOC-Collapse[style*="visibility: hidden"] {
+  display: none;
+}
+
+/* 修改 Item 的布局 */
+.jp-TOC-Item-Content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;  /* 确保文本可以正确截断 */
+}
+
+/* 占位符样式 */
+.jp-TOC-Collapse.jp-TOC-Collapse-placeholder {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* 移除占位符的悬停效果 */
+.jp-TOC-Item:hover .jp-TOC-Collapse.jp-TOC-Collapse-placeholder {
+  opacity: 0;
 }
