@@ -261,26 +261,38 @@ export class TOCPanel extends Widget {
       
       // 如果只选择了一个项目，则跳转到该项目
       if (this._selectedItems.size === 1) {
-        const notebook = this._tracker.currentWidget?.content;
+        const notebook = this._tracker.currentWidget;
         if (!notebook) return;
 
-        notebook.activeCellIndex = header.cellIndex;
-        const activeCell = notebook.activeCell;
+        // 先激活 notebook
+        notebook.activate();
         
-        if (activeCell instanceof MarkdownCell && activeCell.editor) {
-          const position = {
-            line: header.lineNumber,
-            column: 0
-          };
-          activeCell.editor.setCursorPosition(position);
-
-          const coords = activeCell.editor.getCoordinateForPosition(position);
-          if (coords) {
-            const editorNode = activeCell.editor.host;
-            editorNode.scrollTop = coords.top - editorNode.clientHeight / 2;
+        // 激活目标单元格
+        notebook.content.activeCellIndex = header.cellIndex;
+        const activeCell = notebook.content.activeCell;
+        
+        if (activeCell instanceof MarkdownCell) {
+          // 确保单元格可见并滚动到视图中
+          notebook.content.scrollToCell(activeCell);
+          
+          // 如果是编辑模式，设置光标位置
+          if (activeCell.editor) {
+            const position = {
+              line: header.lineNumber,
+              column: 0
+            };
+            activeCell.editor.setCursorPosition(position);
           }
 
-          this._updateItemHighlight(li, header);
+          // 触发 headerClicked 信号
+          this.headerClicked.emit({
+            cellIndex: header.cellIndex,
+            header: {
+              level: header.level,
+              text: header.text,
+              lineNumber: header.lineNumber
+            }
+          });
         }
       }
     });
