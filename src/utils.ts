@@ -73,15 +73,25 @@ export interface HeaderInfo {
 export function getHeaders(text: string): HeaderInfo[] {
   const lines = text.split('\n');
   const headers: HeaderInfo[] = [];
+  let inCodeBlock = false;  // 跟踪是否在代码块内
   
   lines.forEach((line, index) => {
-    const match = line.match(/^(#{1,8})\s+(.+)$/);
-    if (match) {
-      headers.push({
-        level: match[1].length,
-        text: match[2],
-        lineNumber: index
-      });
+    // 检查是否进入或离开代码块
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      return;  // 跳过代码块标记行
+    }
+    
+    // 只有在不在代码块内时才检查标题
+    if (!inCodeBlock) {
+      const match = line.match(/^(#{1,8})\s+(.+)$/);
+      if (match) {
+        headers.push({
+          level: match[1].length,
+          text: match[2],
+          lineNumber: index
+        });
+      }
     }
   });
   
